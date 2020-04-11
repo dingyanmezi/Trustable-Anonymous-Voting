@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="14736-project4">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/gson-2.8.6.jar!/" />
+      <root url="jar://$PROJECT_DIR$/commons-codec-1.11.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
