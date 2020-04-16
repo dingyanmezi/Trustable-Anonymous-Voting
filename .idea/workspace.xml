@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="28febfbd-872c-409f-92d0-0b0f12475656" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/blockchain/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/Node.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/debug_storage.txt" beforeDir="false" afterPath="$PROJECT_DIR$/debug_storage.txt" afterDir="false" />
@@ -10,6 +11,11 @@
       <change beforePath="$PROJECT_DIR$/test/blockchain/NodeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/blockchain/NodeTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/vote/RegistrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/vote/RegistrationTest.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/test/vote/VoteTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/vote/VoteTest.java" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/blockchain/NodeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/blockchain/NodeTest.java" afterDir="false" />
+>>>>>>> final passed with votingTest not stable
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -59,7 +65,11 @@
       <updated>1586302216298</updated>
       <workItem from="1586302217763" duration="41384000" />
       <workItem from="1586577694884" duration="51807000" />
+<<<<<<< HEAD
       <workItem from="1587015761650" duration="1781000" />
+=======
+      <workItem from="1587015761650" duration="2091000" />
+>>>>>>> final passed with votingTest not stable
     </task>
     <servers />
   </component>
