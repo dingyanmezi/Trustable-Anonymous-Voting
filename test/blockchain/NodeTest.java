@@ -144,7 +144,7 @@ abstract class NodeTest extends Test
 
             if(server != null)
             {
-                server.destroy();
+                kill(server.toHandle());
 
                 try
                 {
@@ -157,6 +157,11 @@ abstract class NodeTest extends Test
         }
 
         servers = new ArrayList<>();
+    }
+
+    protected void kill(ProcessHandle handle) {
+        handle.descendants().forEach(this::kill);
+        handle.destroy();
     }
 
 

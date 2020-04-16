@@ -2,59 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="28febfbd-872c-409f-92d0-0b0f12475656" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/libraries/14736_project4.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/14736-project4.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/API/BlockChainNode.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/API/VotingClient.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/API/VotingServer.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/blockchain/Blockchain.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/blockchain/Node.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/commons-codec-1.11.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/debug_storage.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/gson-2.8.6.jar" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/MessageHandler.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/lib/MessageSender.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/AddBlockRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/BecomeCandidateRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/Block.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/BlockReply.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/BroadcastRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/CastVoteRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/CountVotesReply.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/CountVotesRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/GetCandidatesReply.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/GetChainReply.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/GetChainRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/MineBlockRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/SleepRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/StartVoteRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/message/StatusReply.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/Config.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/ConformanceTests.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/blockchain/ConsensusTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/blockchain/MessageTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/blockchain/MiningTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/blockchain/NodeTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/blockchain/SpeedTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/FailedDuringTask.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/FatalError.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/Series.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/SeriesReport.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/Test.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/TestFailed.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/TestReport.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/TestUtil.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/util/Timeout.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/vote/CandidacyTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/vote/CastVoteTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/vote/CountVoteTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/vote/RegistrationTest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/test/vote/VoteTest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/Node.java" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/Node.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/debug_storage.txt" beforeDir="false" afterPath="$PROJECT_DIR$/debug_storage.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/lib/MessageSender.java" beforeDir="false" afterPath="$PROJECT_DIR$/lib/MessageSender.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/ConformanceTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/ConformanceTests.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/blockchain/NodeTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/blockchain/NodeTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/vote/RegistrationTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/vote/RegistrationTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test/vote/VoteTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/test/vote/VoteTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +27,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1aEYS20BcZEswpJ3NPRFjGHtmj6" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="1" id="Add" />
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showExcludedFiles" value="true" />
@@ -87,6 +45,7 @@
     <property name="node.js.path.for.package.tslint" value="project" />
     <property name="node.js.selected.package.eslint" value="(autodetect)" />
     <property name="node.js.selected.package.tslint" value="(autodetect)" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.General" />
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -98,7 +57,9 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1586302216298</updated>
-      <workItem from="1586302217763" duration="40510000" />
+      <workItem from="1586302217763" duration="41384000" />
+      <workItem from="1586577694884" duration="51807000" />
+      <workItem from="1587015761650" duration="1781000" />
     </task>
     <servers />
   </component>
@@ -110,5 +71,21 @@
       <screen x="0" y="0" width="1440" height="900" />
     </state>
     <state x="458" y="204" key="#com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog/0.0.1440.900@0.0.1440.900" timestamp="1586487721783" />
+    <state x="229" y="89" key="SettingsEditor" timestamp="1586577670328">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="229" y="89" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1586577670328" />
+    <state x="572" y="373" key="VCS.ChangelistChooser" timestamp="1586723555156">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="572" y="373" key="VCS.ChangelistChooser/0.0.1440.900@0.0.1440.900" timestamp="1586723555156" />
+    <state x="399" y="282" key="com.intellij.ide.util.TipDialog" timestamp="1587015761708">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="399" y="282" key="com.intellij.ide.util.TipDialog/0.0.1440.900@0.0.1440.900" timestamp="1587015761708" />
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup" timestamp="1587015258014">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="385" y="196" width="670" height="676" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1587015258014" />
   </component>
 </project>

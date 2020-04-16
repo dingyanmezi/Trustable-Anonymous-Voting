@@ -20,7 +20,7 @@ public class Node{
 
     private static int NODE_ID;
     private static String[] PORT_LIST;
-    private static final String HOSTNAME = "localhost";
+    private static final String HOSTNAME = "127.0.0.1";
     private static int[] NODE_PORTS = Config.node_ports;
     public static List<Integer> live_ports = new ArrayList<>();
     protected HttpServer server;
@@ -171,17 +171,10 @@ public class Node{
                 br = new BroadcastRequest(chainId, "PRECOMMIT", blk);
                 int successCount = 0;
 
-//                System.out.println("live_ports : ----- " + live_ports);
                 for (int each : NODE_PORTS){
                     if (each != this.port){
-                        HttpClient client = HttpClient.newHttpClient();
-                        HttpRequest request = HttpRequest.newBuilder()
-                                .uri(URI.create("http://" + HOSTNAME + ":" + each + "/broadcast"))
-                                .setHeader("Content-Type", "application/json")
-                                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(br)))
-                                .build();
                         try {
-                            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                            HttpResponse<String> response = getResponse("/broadcast", br, each);
                             boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
                             System.out.println(gson.fromJson(response.body(), StatusReply.class).getInfo());
                             if (success) successCount++;
@@ -190,20 +183,14 @@ public class Node{
                         }
                     }
                 }
-                System.out.println(successCount);
+                // check whether larger than 2/3 for consensus
                 if (successCount >= (int) Math.ceil((NODE_PORTS.length - 1) * 2.0 / 3)){
                     candi.addBlock(blk);
                     br = new BroadcastRequest(chainId, "COMMIT", blk);
                     for (int each : NODE_PORTS){
                         if (each != this.port){
-                            HttpClient client = HttpClient.newHttpClient();
-                            HttpRequest request = HttpRequest.newBuilder()
-                                    .uri(URI.create("http://" + HOSTNAME + ":" + each + "/broadcast"))
-                                    .setHeader("Content-Type", "application/json")
-                                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(br)))
-                                    .build();
                             try {
-                                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                                HttpResponse<String> response = getResponse("/broadcast", br, each);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
@@ -259,10 +246,6 @@ public class Node{
                                 && candi.getPrevHash().equals(prevHash)){
                             sr = new StatusReply(true, "precommit conditions met");
                         }else{
-//                            System.out.println(Block.computeHash(blk));
-//                            System.out.println(hash);
-//                            System.out.println(candi.getPrevHash());
-//                            System.out.println(prevHash);
                             sr = new StatusReply(false, "one of the condition not met during precommit");
                         }
                         break;
@@ -291,35 +274,23 @@ public class Node{
                     reply = new StatusReply(true, "");
                     respText = gson.toJson(reply);
                     this.generateResponseAndClose(exchange ,respText, returnCode);
-                    // TODO 下面不知道remove了之后该不该加回来！！
                     live_ports.remove((Integer) port);
                     Thread.sleep(timeout);
+                    // after timeout you need to add it back FOR SURE LOL
                     live_ports.add(port);
                     GetChainRequest gcr = null;
+                    /** nodes need to sync blockchain after waking up*/
                     for (int each : live_ports){
                         if (each != this.port){
                             gcr = new GetChainRequest(1);
-                            HttpClient client = HttpClient.newHttpClient();
-                            HttpRequest request = HttpRequest.newBuilder()
-                                    .uri(URI.create("http://" + HOSTNAME + ":" + each + "/getchain"))
-                                    .setHeader("Content-Type", "application/json")
-                                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(gcr)))
-                                    .build();
-                            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                            HttpResponse<String> response = getResponse("/getchain", gcr, each);
                             int length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
                             List<Block> blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
                             if (length > this.firstBlockchain.getLength()){
                                 this.firstBlockchain.setBlocks(blks);
                             }
-
                             gcr = new GetChainRequest(2);
-                            client = HttpClient.newHttpClient();
-                            request = HttpRequest.newBuilder()
-                                    .uri(URI.create("http://" + HOSTNAME + ":" + each + "/getchain"))
-                                    .setHeader("Content-Type", "application/json")
-                                    .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(gcr)))
-                                    .build();
-                            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                            response = getResponse("/getchain", gcr, each);
                             length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
                             blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
                             if (length > this.secondBlockchain.getLength()){
@@ -341,6 +312,16 @@ public class Node{
         output.write(respText.getBytes());
         output.flush();
         exchange.close();
+    }
+
+    private HttpResponse<String> getResponse(String api, Object obj, int port) throws IOException, InterruptedException {
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create("http://" + HOSTNAME + ":" + port + api))
+                .setHeader("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(gson.toJson(obj)))
+                .build();
+        return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
 
