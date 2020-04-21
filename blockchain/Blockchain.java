@@ -1,11 +1,18 @@
+/**
+ *
+ *      File Name -     Blockchain.java
+ *      Created By -    Pujie Wang
+ *      Brief -
+ *
+ *          The blockchain structure that stores blocks. Contains a genesis block by default
+ *
+ */
+
 package blockchain;
 
 import message.Block;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.TreeMap;
 
 public class Blockchain {
     private static Block genesis = new Block();
@@ -43,7 +50,4 @@ public class Blockchain {
         this.blocks = list;
     }
 
-    public static void main(String[] args) {
-
-    }
 }

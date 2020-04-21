@@ -236,7 +236,6 @@ abstract class NodeTest extends Test
         {
             add_reply = sender.post(add_uri, add_request,
                     StatusReply.class);
-            System.out.println(add_reply.getInfo());
             if (add_reply == null) throw new Exception();
         }
         catch (Exception ex)

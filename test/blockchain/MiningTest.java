@@ -134,6 +134,7 @@ public class MiningTest extends NodeTest
             }
 
             checkChainLength(nodes, chain_id, chain_lengths[c]);
+
             if (!block.getHash().startsWith(chain_proof))
             {
                 throw new TestFailed("Error: " +
@@ -157,6 +158,7 @@ public class MiningTest extends NodeTest
                 throw new TestFailed("AddBlock failed: " +
                         "No response or incorrect format");
             }
+
             if (!add_reply.getSuccess())
             {
                 throw new TestFailed("Error: Failed to add block!");
@@ -338,8 +340,6 @@ public class MiningTest extends NodeTest
             List<Block> blocks = reply.getBlocks();
             Block block = blocks.get(index);
             Block prev_block = blocks.get(index - 1);
-//            System.out.println(block.getPreviousHash() + " vs " +
-//                    prev_block.getHash());
 
             if (!block.getData().equals(expect_data))
             {

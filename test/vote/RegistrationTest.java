@@ -55,7 +55,6 @@ public class RegistrationTest extends VoteTest
 
         if (blocks.size() < client_ports.size() + 2)
         {
-            System.out.println(blocks.size() + "----------" + (client_ports.size() + 2));
             throw new TestFailed("AddPublicKey failed: " +
                     "Insufficient number of keys");
         }

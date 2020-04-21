@@ -14,7 +14,10 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class Node{
 
@@ -89,7 +92,7 @@ public class Node{
         }));
     }
 
-    private synchronized void mineBlock(){
+    private void mineBlock(){
         this.server.createContext("/mineblock", (exchange -> {
             String respText = "";
             int returnCode = 200;
@@ -100,6 +103,7 @@ public class Node{
                 mbr = gson.fromJson(isr, MineBlockRequest.class);
 
                 int chainId = mbr.getChainId();
+
                 Blockchain candi = null;
                 switch (chainId){
                     case 1:
@@ -110,19 +114,28 @@ public class Node{
                         break;
                     default:
                 }
+
+                try {
+                    syncChain(chainId, candi);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
                 Map<String, String> data = mbr.getData();
                 Random rand = new Random();
 
                 String prev_hash = candi.getPrevHash();
                 long timestamp = System.currentTimeMillis();
-                long nonce = rand.nextLong();
+                long nonce = 0;
                 Block block = new Block((long) candi.getLength(), data, timestamp, nonce, prev_hash, null);
                 String hash = Block.computeHash(block);
-                while (!hash.startsWith("00000")){
-                    nonce = rand.nextLong();
-                    timestamp = System.currentTimeMillis();
-                    block = new Block((long) candi.getLength(), data, timestamp, nonce, prev_hash, null);
-                    hash = Block.computeHash(block);
+                if (chainId == 1){
+                    while (!hash.startsWith("00000")){
+                        nonce++;
+                        timestamp = System.currentTimeMillis();
+                        block = new Block((long) candi.getLength(), data, timestamp, nonce, prev_hash, null);
+                        hash = Block.computeHash(block);
+                    }
                 }
                 block.setHash(hash);
                 br = new BlockReply(chainId, block);
@@ -132,7 +145,7 @@ public class Node{
         }));
     }
 
-    private synchronized void addBlock(){
+    private void addBlock(){
         this.server.createContext("/addblock", (exchange -> {
             String respText = "";
             int returnCode = 200;
@@ -169,37 +182,60 @@ public class Node{
                     return;
                 }
                 br = new BroadcastRequest(chainId, "PRECOMMIT", blk);
-                int successCount = 0;
 
+                List<Future<Boolean>> allFutures = new ArrayList<>();
+                int successCount = 0;
+                ExecutorService executor = Executors.newFixedThreadPool(NODE_PORTS.length);
                 for (int each : NODE_PORTS){
                     if (each != this.port){
-                        try {
-                            HttpResponse<String> response = getResponse("/broadcast", br, each);
+                        Future<Boolean> future = executor.submit(() -> {
+                            HttpResponse<String> response = null;
+                            try {
+                                response = getResponse("/broadcast",
+                                        new BroadcastRequest(chainId, "PRECOMMIT", blk), each);
+                            } catch (Exception e){
+                                e.printStackTrace();
+                            }
                             boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
                             System.out.println(gson.fromJson(response.body(), StatusReply.class).getInfo());
-                            if (success) successCount++;
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
+                            return success;
+                        });
+                        allFutures.add(future);
                     }
                 }
+                for (Future<Boolean> each : allFutures){
+                    try {
+                        if (each.get().equals(true)) successCount++;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    }
+                }
+                executor.shutdown();
+
                 // check whether larger than 2/3 for consensus
+                executor = Executors.newFixedThreadPool(NODE_PORTS.length);
                 if (successCount >= (int) Math.ceil((NODE_PORTS.length - 1) * 2.0 / 3)){
                     candi.addBlock(blk);
                     br = new BroadcastRequest(chainId, "COMMIT", blk);
                     for (int each : NODE_PORTS){
                         if (each != this.port){
-                            try {
-                                HttpResponse<String> response = getResponse("/broadcast", br, each);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                            executor.submit(() -> {
+                                try {
+                                    HttpResponse<String> response = getResponse("/broadcast",
+                                            new BroadcastRequest(chainId, "COMMIT", blk), each);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            });
                         }
                     }
                     sr = new StatusReply(true, "approval by 2/3");
                 }else{
                     sr = new StatusReply(false, "not up to 2/3 approval");
                 }
+                executor.shutdown();
                 respText = gson.toJson(sr);
                 this.generateResponseAndClose(exchange, respText, returnCode);
             }
@@ -278,27 +314,9 @@ public class Node{
                     Thread.sleep(timeout);
                     // after timeout you need to add it back FOR SURE LOL
                     live_ports.add(port);
-                    GetChainRequest gcr = null;
                     /** nodes need to sync blockchain after waking up*/
-                    for (int each : live_ports){
-                        if (each != this.port){
-                            gcr = new GetChainRequest(1);
-                            HttpResponse<String> response = getResponse("/getchain", gcr, each);
-                            int length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
-                            List<Block> blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
-                            if (length > this.firstBlockchain.getLength()){
-                                this.firstBlockchain.setBlocks(blks);
-                            }
-                            gcr = new GetChainRequest(2);
-                            response = getResponse("/getchain", gcr, each);
-                            length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
-                            blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
-                            if (length > this.secondBlockchain.getLength()){
-                                this.secondBlockchain.setBlocks(blks);
-                            }
-                            break;
-                        }
-                    }
+                     syncChain(1, this.firstBlockchain);
+                     syncChain(2, this.secondBlockchain);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -324,6 +342,38 @@ public class Node{
         return client.send(request, HttpResponse.BodyHandlers.ofString());
     }
 
+    private void syncChain(int chainId, Blockchain candi) throws IOException, InterruptedException {
+        GetChainRequest gcr = null;
+        ExecutorService executor = Executors.newFixedThreadPool(live_ports.size());
+        for (int each : live_ports){
+            if (each != this.port){
+                executor.submit(() -> {
+                    HttpResponse<String> response = null;
+                    try {
+                        response = getResponse("/getchain", new GetChainRequest(chainId), each);
+                    } catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    int length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
+                    List<Block> blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
+                    if (length > candi.getLength()){
+                        candi.setBlocks(blks);
+                    }
+//                    try {
+//                        response = getResponse("/getchain", new GetChainRequest(2), each);
+//                    } catch (Exception e){
+//                        e.printStackTrace();
+//                    }
+//                    length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
+//                    blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
+//                    if (length > this.secondBlockchain.getLength()) {
+//                        this.secondBlockchain.setBlocks(blks);
+//                    }
+                });
+            }
+        }
+        executor.shutdown();
+    }
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2){

@@ -250,7 +250,7 @@ public class MessageTest extends NodeTest
             {
                 // Ignore exception because request failure is expected
             }
-            System.out.println("This is node : -----" + i);
+
             if (add_success)
             {
                 throw new TestFailed("Sleep failed: " +

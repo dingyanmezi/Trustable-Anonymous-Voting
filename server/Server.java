@@ -63,14 +63,15 @@ public class Server {
         data.put("user_name", "server");
         mbr = new MineBlockRequest(1, data);
         int chain_id = 1;
-
-        HttpResponse<String> response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
-        Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
-
-        abr = new AddBlockRequest(1, block);
-        response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
-        boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
-        String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
+        boolean success = false;
+        while (!success){
+            HttpResponse<String> response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
+            Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
+            abr = new AddBlockRequest(1, block);
+            response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
+            success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
+            String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
+        }
 
     }
 
@@ -171,153 +172,164 @@ public class Server {
             if ("POST".equals(exchange.getRequestMethod())) {
                 CastVoteRequest cvr = null;
                 StatusReply sr = null;
-                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
-                cvr = gson.fromJson(isr, CastVoteRequest.class);
+                synchronized(this){
+                    InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
+                    cvr = gson.fromJson(isr, CastVoteRequest.class);
 
-                String encrypted_vote_contents = cvr.getEncryptedVotes();
-                String encrypted_session_key = cvr.getEncryptedSessionKey();
+                    String encrypted_vote_contents = cvr.getEncryptedVotes();
+                    String encrypted_session_key = cvr.getEncryptedSessionKey();
 
-                /** 0. check for malformed/unencrpted vote */
+                    /** 0. check for malformed/unencrpted vote */
 
-                for (String candidate : candidates){
-                    if (encrypted_session_key.equals(candidate) || encrypted_vote_contents.equals(candidate)){
-                        sr = new StatusReply(false, "malformed");
-                        respText = gson.toJson(sr);
-                        returnCode = 409;
-                        this.generateResponseAndClose(exchange, respText, returnCode);
-                        return;
+                    for (String candidate : candidates){
+                        if (encrypted_session_key.equals(candidate) || encrypted_vote_contents.equals(candidate)){
+                            sr = new StatusReply(false, "malformed");
+                            respText = gson.toJson(sr);
+                            returnCode = 409;
+                            this.generateResponseAndClose(exchange, respText, returnCode);
+                            return;
+                        }
                     }
-                }
 
-                /** 1. Decrypt the encrypted AES session key with server private key  */
-                PrivateKey server_private_key = null;
-                server_private_key = this.generator.getPrivateKey();
-                String sessionKey = "";
-                try {
-                    sessionKey = RSAUtil.decrypt(encrypted_session_key, server_private_key);
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
-
-                /** 2. Decrypt the encrypted vote contents with AES session key */
-                String json = "";
-                byte[] decodedKey  = Base64.getDecoder().decode(sessionKey);
-                SecretKey originalKey = new SecretKeySpec(decodedKey,"AES");
-                try {
-                    json = RSAUtil.decrypt_for_AES(encrypted_vote_contents, originalKey);
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                }
-
-                AESEncryptObj obj = gson.fromJson(json, AESEncryptObj.class);
-                int chainId = obj.getChainId();
-                String username = obj.getUserName();
-                String encryptedVote = obj.getEncryptedVote();
-
-
-                /** 3. Decrypt the encrypted vote with client public key */
-                HttpResponse<String> response = null;
-                try {
-                    response = getResponse("/getchain", new GetChainRequest(1), BLOCKCHAIN_PORT);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                List<Block> blocks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
-                String client_public_key = "";
-                for (Block each : blocks){
-                    if (each.getData().containsKey("user_name") &&
-                            each.getData().get("user_name").equals(username)){
-                            client_public_key = each.getData().get("public_key");
-                            break;
+                    /** 1. Decrypt the encrypted AES session key with server private key  */
+                    PrivateKey server_private_key = null;
+                    server_private_key = this.generator.getPrivateKey();
+                    String sessionKey = "";
+                    try {
+                        sessionKey = RSAUtil.decrypt(encrypted_session_key, server_private_key);
+                    } catch (IllegalBlockSizeException e) {
+                        e.printStackTrace();
+                    } catch (InvalidKeyException e) {
+                        e.printStackTrace();
+                    } catch (BadPaddingException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchPaddingException e) {
+                        e.printStackTrace();
                     }
-                }
-                byte[] decodeKey_public_key_client = Base64.getDecoder().decode(client_public_key);
-                X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodeKey_public_key_client);
-                KeyFactory keyFactory = null;
-                try {
-                    keyFactory = KeyFactory.getInstance("RSA");
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                PublicKey the_final_client_public_key = null;
-                try {
-                   the_final_client_public_key  = keyFactory.generatePublic(keySpec);
-                } catch (InvalidKeySpecException e) {
-                    e.printStackTrace();
-                }
 
-                String candidateName = "";
-                try {
-                    candidateName = RSAUtil.decrypt(encryptedVote, the_final_client_public_key);
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
+                    /** 2. Decrypt the encrypted vote contents with AES session key */
+                    String json = "";
+                    byte[] decodedKey  = Base64.getDecoder().decode(sessionKey);
+                    SecretKey originalKey = new SecretKeySpec(decodedKey,"AES");
+                    try {
+                        json = RSAUtil.decrypt_for_AES(encrypted_vote_contents, originalKey);
+                    } catch (IllegalBlockSizeException e) {
+                        e.printStackTrace();
+                    } catch (InvalidKeyException e) {
+                        e.printStackTrace();
+                    } catch (BadPaddingException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchPaddingException e) {
+                        e.printStackTrace();
+                    }
+
+                    AESEncryptObj obj = gson.fromJson(json, AESEncryptObj.class);
+                    int chainId = obj.getChainId();
+                    String username = obj.getUserName();
+                    String encryptedVote = obj.getEncryptedVote();
+
+
+                    /** 3. Decrypt the encrypted vote with client public key */
+                    HttpResponse<String> response = null;
+                    try {
+                        response = getResponse("/getchain", new GetChainRequest(1), BLOCKCHAIN_PORT);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    List<Block> blocks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
+                    String client_public_key = "";
+                    for (Block each : blocks){
+                        if (each.getData().containsKey("user_name") &&
+                                each.getData().get("user_name").equals(username)){
+                                client_public_key = each.getData().get("public_key");
+                                break;
+                        }
+                    }
+                    byte[] decodeKey_public_key_client = Base64.getDecoder().decode(client_public_key);
+                    X509EncodedKeySpec keySpec = new X509EncodedKeySpec(decodeKey_public_key_client);
+                    KeyFactory keyFactory = null;
+                    try {
+                        keyFactory = KeyFactory.getInstance("RSA");
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                    PublicKey the_final_client_public_key = null;
+                    try {
+                    the_final_client_public_key  = keyFactory.generatePublic(keySpec);
+                    } catch (InvalidKeySpecException e) {
+                        e.printStackTrace();
+                    }
+
+                    String candidateName = "";
+                    try {
+                        candidateName = RSAUtil.decrypt(encryptedVote, the_final_client_public_key);
+                    } catch (IllegalBlockSizeException e) {
+                        e.printStackTrace();
+                    } catch (InvalidKeyException e) {
+                        e.printStackTrace();
+                    } catch (BadPaddingException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchPaddingException e) {
+                        e.printStackTrace();
+                    }
+
+                    /** 4. add a node : A Encrypt voter name with client public key + B add a block */
+
+                    String vote_credential = "";
+                    try {
+                        vote_credential = Base64.getEncoder().encodeToString(RSAUtil.encrypt(username,
+                                the_final_client_public_key));
+                    } catch (BadPaddingException e) {
+                        e.printStackTrace();
+                    } catch (IllegalBlockSizeException e) {
+                        e.printStackTrace();
+                    } catch (InvalidKeyException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchPaddingException e) {
+                        e.printStackTrace();
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                    Map<String, String> map = new TreeMap<>();
+                    map.put("vote", candidateName);
+                    map.put("vote_credential", vote_credential);
+                    MineBlockRequest mbr = new MineBlockRequest(2, map);
+
+                    boolean success = false;
+
+                    System.out.println("CASTVOTE BEFORE MINE AND ADD !!!!");
+                    while (!success){
+                        try {
+                            response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("MINE MINE MINE");
+                        Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
+                        AddBlockRequest abr = new AddBlockRequest(2, block);
+                        try {
+                            response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
+                        System.out.println(success + " AFTER ADD IN BETWEEN CASTVOTE make ");
+                        String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
+                    }
+                    System.out.println("CASTVOTE AFTER MINE AND ADD !!!!");
+                
+                
+
+                    sr = new StatusReply(true, "finish everything about castVote");
+                    respText = gson.toJson(sr);
+                    this.generateResponseAndClose(exchange ,respText, returnCode);
                 }
-
-                /** 4. add a node : A Encrypt voter name with client public key + B add a block */
-
-                String vote_credential = "";
-                try {
-                    vote_credential = Base64.getEncoder().encodeToString(RSAUtil.encrypt(username,
-                            the_final_client_public_key));
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                Map<String, String> map = new TreeMap<>();
-                map.put("vote", candidateName);
-                map.put("vote_credential", vote_credential);
-                MineBlockRequest mbr = new MineBlockRequest(2, map);
-
-                try {
-                    response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
-
-                AddBlockRequest abr = new AddBlockRequest(2, block);
-                try {
-                    response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
-                String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
-
-                sr = new StatusReply(true, "finish everything about castVote");
-                respText = gson.toJson(sr);
-                this.generateResponseAndClose(exchange ,respText, returnCode);
             }
         }));
     }

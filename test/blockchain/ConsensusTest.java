@@ -143,7 +143,7 @@ public class ConsensusTest extends NodeTest
             Thread.sleep(time_remaining);
         }
         catch (InterruptedException ex) {}
-        System.out.println("line146 : === " + nodes_alive);
+
         // test consensus on nodes that did not sleep
         checkChainConsensus(nodes_alive, chain_id, chain_lengths[c]);
 
@@ -197,7 +197,7 @@ public class ConsensusTest extends NodeTest
         for (int n = 0; n < num_alive; n++)
         {
             boolean success = addBlock(n, chain_id, block);
-            System.out.println(num_alive + "-------" + n + "-------" + success);
+
             if (success)
             {
                 throw new TestFailed("Error: " +

@@ -1,3 +1,13 @@
+/**
+ *
+ *      File Name -     Client.java
+ *      Created By -    Pujie Wang
+ *      Brief -
+ *
+ *          The clients are participants within the voting systems. Accepting API requests from test suites.
+ *
+ */
+
 package client;
 
 import com.google.gson.Gson;
@@ -7,7 +17,6 @@ import lib.AESEncryptObj;
 import lib.RSAUtil;
 import message.*;
 import server.RSAKeyPairGenerator;
-import server.Server;
 
 import javax.crypto.*;
 import java.io.*;
@@ -16,7 +25,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.InvalidKeyException;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
@@ -40,31 +48,34 @@ public class Client {
     private String username;
     private boolean hasVoted;
 
-    public Client() throws IOException, NoSuchAlgorithmException {
+    public Client() throws NoSuchAlgorithmException {
         this.gson = new Gson();
-
         this.generator = new RSAKeyPairGenerator();
         this.username = "client" + CLIENT_PORT;
         this.hasVoted = false;
     }
 
-    /** YOU NEED TO REGISTER BEFORE BEFORE BEFORE YOU CREATE AND START THE SERVER !!! */
+    /**
+     * YOU NEED TO REGISTER BEFORE BEFORE BEFORE YOU CREATE AND START THE SERVER !!!
+     *
+     * register the client's public keys to identity chain
+     *
+     * */
     private void start() throws IOException, InterruptedException {
         // I CANNOT believe that I made this bug again
         this.register();
         this.startSkeletons();
         this.client_server.start();
-
     }
 
+    /** create the server and set up API handler */
     private void startSkeletons() throws IOException {
         this.client_server =  HttpServer.create(new InetSocketAddress(CLIENT_PORT), 0);
         this.client_server.setExecutor(Executors.newCachedThreadPool());
         this.startVote();
     }
 
-
-
+    /** generate public key for this client, mine and add the block to the identity chain */
     private void register() throws IOException, InterruptedException {
         MineBlockRequest mbr = null;
         AddBlockRequest abr = null;
@@ -76,15 +87,23 @@ public class Client {
 
         HttpResponse<String> response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
         Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
-
-        abr = new AddBlockRequest(1, block);
-        response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
-        boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
-        String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
-
-
+        boolean success = false;
+        while (!success){
+            abr = new AddBlockRequest(1, block);
+            response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
+            success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
+        }
     }
-
+    /**
+     *  StartVote process includes such :
+     *  0. check for improper candidate name
+     *  1. encrypt with Client Private Key
+     *  2. Encrypt 3 fields of information with AES session key
+     *  3. Encrypt the session key with server public key
+     *  4. send message
+     *
+     *
+     * */
     private void startVote() {
         this.client_server.createContext("/startvote", (exchange -> {
             String respText = "";
@@ -107,7 +126,7 @@ public class Client {
                     e.printStackTrace();
                 }
                 List<String> candidates = gson.fromJson(response.body(), GetCandidatesReply.class).getCandidates();
-
+                
                 if (!candidates.contains(vote_for))
                 {
                     sr = new StatusReply(false, "covid - 19 ");
@@ -123,7 +142,7 @@ public class Client {
                     this.generateResponseAndClose(exchange, respText, returnCode);
                     return;
                 }
-                // TODO Implementation --------- POSSIBLE FALSE SYNTAX FOR ENCRYPTION
+
                 // generate session key
                 KeyGenerator keyGen = null;
                 try {
@@ -138,15 +157,7 @@ public class Client {
                 try {
                     encryptedString = Base64.getEncoder().encodeToString(RSAUtil.encrypt(vote_for,
                             this.generator.getPrivateKey()));
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
+                } catch (Exception e){
                     e.printStackTrace();
                 }
 
@@ -160,19 +171,11 @@ public class Client {
                     // Act on the actual data and make it to String form
                     encrypted_vote_contents = Base64.getEncoder().encodeToString(
                             RSAUtil.encrypt_for_AES(obj_to_json, sessionKey));
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
+                } catch (Exception e){
                     e.printStackTrace();
                 }
 
-                /** 3. Encrypt the session key with server public key*/
+                /** 3. Encrypt the session key with server public key */
                 String encrypted_session_key = "";
                 try {
                     response = getResponse("/getchain", new GetChainRequest(1), BLOCKCHAIN_PORT);
@@ -180,7 +183,6 @@ public class Client {
                     e.printStackTrace();
                 }
                 List<Block> blocks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
-//                int length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
                 String server_public_key = "";
                 for (Block each : blocks){
                     if (each.getData().containsKey("user_name") &&
@@ -207,28 +209,23 @@ public class Client {
                     encrypted_session_key = Base64.getEncoder().encodeToString(RSAUtil.encrypt(
                             Base64.getEncoder().encodeToString(sessionKey.getEncoded()),
                             pubKey));
-                } catch (BadPaddingException e) {
-                    e.printStackTrace();
-                } catch (IllegalBlockSizeException e) {
-                    e.printStackTrace();
-                } catch (InvalidKeyException e) {
-                    e.printStackTrace();
-                } catch (NoSuchPaddingException e) {
-                    e.printStackTrace();
-                } catch (NoSuchAlgorithmException e) {
+                } catch (Exception e){
                     e.printStackTrace();
                 }
-
+                System.out.println("REACED before casting vote !!!");
 
                 /** 4. send message */
                 CastVoteRequest cvr = new CastVoteRequest(encrypted_vote_contents, encrypted_session_key);
                 try {
                   response  = getResponse("/castvote", cvr, SERVER_PORT);
                   boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
+                  System.out.println(this.username + " -------- " + success);
                   String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
+                  System.out.println(this.username + " -------- " + info);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+
                 /** return */
                 this.hasVoted = true;
                 sr = new StatusReply(true, "message sent from the voting client");
@@ -261,13 +258,12 @@ public class Client {
             System.out.println("Proper Usage is: java MyClass 88 88 88");
             System.exit(0);
         }
-
-        String[] clientPorts = args[0].split(",");
+        // take out the ports respectively
         CLIENT_PORT = Integer.parseInt(args[0]);
-//        for (int i = 0; i < clientPorts.length; i++) CLIENT_PORTS[i] = Integer.parseInt(clientPorts[i]);
         SERVER_PORT = Integer.parseInt(args[1]);
         BLOCKCHAIN_PORT = Integer.parseInt(args[2]);
 
+        // used for debugging purpose
         PrintStream debug_file = new PrintStream(new FileOutputStream("debug_storage.txt", true));
         System.setOut(debug_file);
 
