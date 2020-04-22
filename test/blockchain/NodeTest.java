@@ -43,8 +43,8 @@ abstract class NodeTest extends Test
     protected static final int SLEEP_TIMEOUT = 30;
     protected static final int CLIENT_TIMEOUT = 30;
 
-    protected static final int KEYCHAIN_ID = 1;
     protected static final int VOTECHAIN_ID = 2;
+    protected static final int KEYCHAIN_ID = 1;
     protected static final int[] CHAIN_IDS = {KEYCHAIN_ID, VOTECHAIN_ID};
     protected static String[] CHAIN_PROOFS;
     protected static final String[] BROADCAST_TYPES = {"PRECOMMIT", "COMMIT"};

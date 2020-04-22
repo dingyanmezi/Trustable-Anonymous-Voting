@@ -38,14 +38,33 @@ import java.util.concurrent.Executors;
 
 public class Client {
 
+    // APIs
+    protected static final String GET_CHAIN_URI = "/getchain";
+    protected static final String MINE_BLOCK_URI = "/mineblock";
+    protected static final String ADD_BLOCK_URI = "/addblock";
+    protected static final String CAST_VOTE_URI = "/castvote";
+    protected static final String GET_CANDIDATES_URI = "/getcandidates";
+    protected static final String START_VOTE_URI = "/startvote";
+
+    protected static final int IDENTITY_ID = 1;
+
+    /** port for this client */
     private static int CLIENT_PORT;
+    /** port for the server it sends request to */
     private static int SERVER_PORT;
+    /** port for the blockchain node */
     private static int BLOCKCHAIN_PORT;
+    /** Host name for all */
     private static final String HOSTNAME = "localhost";
+    /** Object for parsing json */
     private Gson gson;
+    /** the actual server that this client runs  */
     protected HttpServer client_server;
+    /** the generator used to generate public and private keys for the client*/
     private RSAKeyPairGenerator generator;
+    /** the name of this client*/
     private String username;
+    /** document whether this client has voted or not */
     private boolean hasVoted;
 
     public Client() throws NoSuchAlgorithmException {
@@ -77,20 +96,19 @@ public class Client {
 
     /** generate public key for this client, mine and add the block to the identity chain */
     private void register() throws IOException, InterruptedException {
-        MineBlockRequest mbr = null;
         AddBlockRequest abr = null;
 
         Map<String, String> data = new TreeMap<>();
         data.put("public_key", Base64.getEncoder().encodeToString(this.generator.getPublicKey().getEncoded()));
         data.put("user_name", this.username);
-        mbr = new MineBlockRequest(1, data);
+        MineBlockRequest mbr = new MineBlockRequest(IDENTITY_ID, data);
 
-        HttpResponse<String> response = getResponse("/mineblock", mbr, BLOCKCHAIN_PORT);
+        HttpResponse<String> response = getResponse(MINE_BLOCK_URI, mbr, BLOCKCHAIN_PORT);
         Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
         boolean success = false;
         while (!success){
-            abr = new AddBlockRequest(1, block);
-            response = getResponse("/addblock", abr, BLOCKCHAIN_PORT);
+            abr = new AddBlockRequest(IDENTITY_ID, block);
+            response = getResponse(ADD_BLOCK_URI, abr, BLOCKCHAIN_PORT);
             success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
         }
     }
@@ -105,28 +123,26 @@ public class Client {
      *
      * */
     private void startVote() {
-        this.client_server.createContext("/startvote", (exchange -> {
+        this.client_server.createContext(START_VOTE_URI, (exchange -> {
             String respText = "";
             int returnCode = 200;
             if ("POST".equals(exchange.getRequestMethod())) {
                 StartVoteRequest svr = null;
                 StatusReply sr = null;
-
                 InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
                 svr = gson.fromJson(isr, StartVoteRequest.class);
-
                 int chainId = svr.getChainId();
                 String vote_for = svr.getVoteFor();
 
                 /** 0. check for improper candidate name */
                 HttpResponse<String> response = null;
                 try {
-                    response = getResponse("/getcandidates", null, SERVER_PORT);
+                    response = getResponse(GET_CANDIDATES_URI, null, SERVER_PORT);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 List<String> candidates = gson.fromJson(response.body(), GetCandidatesReply.class).getCandidates();
-                
+                // return false for not being a candidate
                 if (!candidates.contains(vote_for))
                 {
                     sr = new StatusReply(false, "covid - 19 ");
@@ -135,6 +151,7 @@ public class Client {
                     this.generateResponseAndClose(exchange, respText, returnCode);
                     return;
                 }
+                // return false for already voted
                 if (this.hasVoted){
                     sr = new StatusReply(false, "has already voted ");
                     respText = gson.toJson(sr);
@@ -178,13 +195,14 @@ public class Client {
                 /** 3. Encrypt the session key with server public key */
                 String encrypted_session_key = "";
                 try {
-                    response = getResponse("/getchain", new GetChainRequest(1), BLOCKCHAIN_PORT);
+                    response = getResponse(GET_CHAIN_URI, new GetChainRequest(IDENTITY_ID), BLOCKCHAIN_PORT);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 List<Block> blocks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
                 String server_public_key = "";
                 for (Block each : blocks){
+                    // NOTE: IT NEEDS TO CHECK WHETHER IT CONTAINS "user_name" FIELD TO GET AWAY WITH GENESIS BLOCK!!!
                     if (each.getData().containsKey("user_name") &&
                             each.getData().get("user_name").equals("server")) {
                         server_public_key = each.getData().get("public_key");
@@ -212,12 +230,11 @@ public class Client {
                 } catch (Exception e){
                     e.printStackTrace();
                 }
-                System.out.println("REACED before casting vote !!!");
 
                 /** 4. send message */
                 CastVoteRequest cvr = new CastVoteRequest(encrypted_vote_contents, encrypted_session_key);
                 try {
-                  response  = getResponse("/castvote", cvr, SERVER_PORT);
+                  response  = getResponse(CAST_VOTE_URI, cvr, SERVER_PORT);
                   boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
                   System.out.println(this.username + " -------- " + success);
                   String info = gson.fromJson(response.body(), StatusReply.class).getInfo();
@@ -227,14 +244,14 @@ public class Client {
                 }
 
                 /** return */
-                this.hasVoted = true;
+                this.hasVoted = true; // this client has voted then
                 sr = new StatusReply(true, "message sent from the voting client");
                 respText = gson.toJson(sr);
                 this.generateResponseAndClose(exchange, respText, returnCode);
             }
         }));
     }
-
+    /** respond with response text and return code for each HTTP request */
     private void generateResponseAndClose(HttpExchange exchange, String respText, int returnCode) throws IOException {
         exchange.sendResponseHeaders(returnCode, respText.getBytes().length);
         OutputStream output = exchange.getResponseBody();
@@ -242,7 +259,13 @@ public class Client {
         output.flush();
         exchange.close();
     }
-
+    /** get response from the request
+     *
+     * @param api specific request
+     * @param obj the request object
+     * @param port port number for the node or server
+     *
+     * */
     private HttpResponse<String> getResponse(String api, Object obj, int port) throws IOException, InterruptedException {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()

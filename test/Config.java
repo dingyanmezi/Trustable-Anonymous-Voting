@@ -27,13 +27,13 @@ package test;
 public class Config {
 
     /* Ports of blockchain nodes */
-    public static final int[] node_ports = {7070, 7071, 7072, 7073};
+    public static final int[] node_ports = {7771, 7772, 7773, 7774};
 
     /* Port of voting authority server */
-    public static final int server_port = 8808;
+    public static final int server_port = 8000;
 
     /* Ports of voting clients */
-    public static final int[] client_ports = {9094, 9095, 9096};
+    public static final int[] client_ports = {9001, 9002, 9003};
 
     /* Path separator on running machine */
     private static final String separator = System.getProperty("path.separator", ":");

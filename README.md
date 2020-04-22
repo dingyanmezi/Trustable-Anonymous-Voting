@@ -30,3 +30,10 @@ curl -v -X POST localhost:7001/getchain -d '{JSON}'
 # for example:
 curl -v -X POST localhost:7001/getchain -d '{"chain_id":1}'
 ```
+
+## TO improve this project further
+
+1. It took us a week approximately to finish the whole project (including checkpoint). The load is not that high 
+compared to the previous project. 
+
+2. Nothing to say specifically. TAs are the best. Thank them for their hard work and help. 
