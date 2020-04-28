@@ -19,6 +19,7 @@ public class Blockchain {
     private static Block genesis = new Block();
     /** determins the blockchain type - Identity or voter */
     private int chain_id;
+    /** the list that stores the blocks as a chain */
     private List<Block> blocks;
 
     public Blockchain(int chain_id){

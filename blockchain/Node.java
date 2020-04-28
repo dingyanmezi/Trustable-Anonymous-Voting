@@ -43,9 +43,15 @@ public class Node{
     // Broadcast types
     protected static final String BROADCAST_PRE = "PRECOMMIT";
     protected static final String BROADCAST_COMMIT = "COMMIT";
+<<<<<<< HEAD
 
+=======
+    /** the index in the port list  */
+>>>>>>> more comments added
     private static int NODE_ID;
+    /** ports of the nodes  */
     private static String[] PORT_LIST;
+    /** host name of the port */
     private static final String HOSTNAME = "127.0.0.1";
     /** all the node ports */
     private static int[] NODE_PORTS = Config.node_ports;
@@ -110,6 +116,7 @@ public class Node{
                         break;
                     default:
                 }
+                // get information regarding chain and return 
                 int length = candi.getLength();
                 List<Block> blocks = candi.getBlocks();
                 GetChainReply reply = new GetChainReply(id, length, blocks);
@@ -143,6 +150,10 @@ public class Node{
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+<<<<<<< HEAD
+=======
+                // get the data preparing for the mining process 
+>>>>>>> more comments added
                 Map<String, String> data = mbr.getData();
                 String prev_hash = candi.getPrevHash();
                 long timestamp = System.currentTimeMillis();
@@ -152,6 +163,7 @@ public class Node{
                 // the 5 difficulty only applies to Identity chain. Voter chain does not any diff!!!
                 if (chainId == IDENTITY_ID){
                     while (!hash.startsWith("00000")){
+                        // change the nonce and update the current time
                         nonce++;
                         timestamp = System.currentTimeMillis();
                         block = new Block(candi.getLength(), data, timestamp, nonce, prev_hash, null);
@@ -207,6 +219,7 @@ public class Node{
                 // make the broadcast go parallel
                 ExecutorService executor = Executors.newFixedThreadPool(NODE_PORTS.length);
                 for (int each : NODE_PORTS){
+                    // making sure the current node does not broadcast to ITSELF!!
                     if (each != this.port){
                         Future<Boolean> future = executor.submit(() -> {
                             HttpResponse<String> response = null;
@@ -234,7 +247,11 @@ public class Node{
 
                 // check whether larger than 2/3 for consensus
                 executor = Executors.newFixedThreadPool(NODE_PORTS.length);
+<<<<<<< HEAD
                 // if up to 2/3, BROADCAST
+=======
+                // if up to 2/3, add the block and BROADCAST other nodes to commit
+>>>>>>> more comments added
                 if (successCount >= (int) Math.ceil((NODE_PORTS.length - 1) * 2.0 / 3)){
                     candi.addBlock(blk);
                     for (int each : NODE_PORTS){
@@ -387,6 +404,7 @@ public class Node{
                     }
                     int length = gson.fromJson(response.body(), GetChainReply.class).getChainLength();
                     List<Block> blks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
+                    // updating the length by setting the blocks list with the larger length
                     if (length > candi.getLength()){
                         candi.setBlocks(blks);
                     }

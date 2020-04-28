@@ -45,7 +45,11 @@ public class Client {
     protected static final String CAST_VOTE_URI = "/castvote";
     protected static final String GET_CANDIDATES_URI = "/getcandidates";
     protected static final String START_VOTE_URI = "/startvote";
+<<<<<<< HEAD
 
+=======
+    // The chain id
+>>>>>>> more comments added
     protected static final int IDENTITY_ID = 1;
 
     /** port for this client */
@@ -102,7 +106,11 @@ public class Client {
         data.put("public_key", Base64.getEncoder().encodeToString(this.generator.getPublicKey().getEncoded()));
         data.put("user_name", this.username);
         MineBlockRequest mbr = new MineBlockRequest(IDENTITY_ID, data);
+<<<<<<< HEAD
 
+=======
+        // mine a new block with username and publickey information stored 
+>>>>>>> more comments added
         HttpResponse<String> response = getResponse(MINE_BLOCK_URI, mbr, BLOCKCHAIN_PORT);
         Block block = gson.fromJson(response.body(), BlockReply.class).getBlock();
         boolean success = false;
@@ -160,7 +168,7 @@ public class Client {
                     return;
                 }
 
-                // generate session key
+                // generate session key using AES algorithm
                 KeyGenerator keyGen = null;
                 try {
                     keyGen = KeyGenerator.getInstance("AES");
@@ -201,6 +209,7 @@ public class Client {
                 }
                 List<Block> blocks = gson.fromJson(response.body(), GetChainReply.class).getBlocks();
                 String server_public_key = "";
+                // search for the server's public key for the further encryption process
                 for (Block each : blocks){
                     // NOTE: IT NEEDS TO CHECK WHETHER IT CONTAINS "user_name" FIELD TO GET AWAY WITH GENESIS BLOCK!!!
                     if (each.getData().containsKey("user_name") &&
@@ -209,6 +218,7 @@ public class Client {
                         break;
                     }
                 }
+                // The following process is for fabricating the original public key, turing it from string to Publikey type
                 byte[] publicBytes = Base64.getDecoder().decode(server_public_key);
                 X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicBytes);
                 KeyFactory keyFactory = null;
@@ -223,6 +233,7 @@ public class Client {
                 } catch (InvalidKeySpecException e) {
                     e.printStackTrace();
                 }
+                // The actual encryption
                 try {
                     encrypted_session_key = Base64.getEncoder().encodeToString(RSAUtil.encrypt(
                             Base64.getEncoder().encodeToString(sessionKey.getEncoded()),
@@ -234,6 +245,10 @@ public class Client {
                 /** 4. send message */
                 CastVoteRequest cvr = new CastVoteRequest(encrypted_vote_contents, encrypted_session_key);
                 try {
+<<<<<<< HEAD
+=======
+                    // send the castVote request to the server 
+>>>>>>> more comments added
                   response  = getResponse(CAST_VOTE_URI, cvr, SERVER_PORT);
                   boolean success = gson.fromJson(response.body(), StatusReply.class).getSuccess();
                   System.out.println(this.username + " -------- " + success);

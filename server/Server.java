@@ -40,7 +40,10 @@ public class Server {
     protected static final String GET_CHAIN_URI = "/getchain";
     protected static final String MINE_BLOCK_URI = "/mineblock";
     protected static final String ADD_BLOCK_URI = "/addblock";
+<<<<<<< HEAD
 
+=======
+>>>>>>> more comments added
     // server apis
     protected static final String SERVER_STATUS_URI = "/checkserver";
     protected static final String BECOME_CANDIDATE_URI = "/becomecandidate";
@@ -50,7 +53,11 @@ public class Server {
     // IDs
     protected static final int IDENTITY_ID = 1;
     protected static final int VOTECHAIN_ID = 2;
+<<<<<<< HEAD
 
+=======
+    /** host name */
+>>>>>>> more comments added
     private static final String HOSTNAME = "localhost";
     /** port for the voting server */
     private static int VOTING_SERVER_PORT;
@@ -287,7 +294,11 @@ public class Server {
                     map.put("vote", candidateName);
                     map.put("vote_credential", vote_credential);
                     MineBlockRequest mbr = new MineBlockRequest(VOTECHAIN_ID, map);
+<<<<<<< HEAD
 
+=======
+                    // mine and add a new vote block to the vote chain
+>>>>>>> more comments added
                     boolean success = false;
                     while (!success){
                         try {

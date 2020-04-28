@@ -11,6 +11,7 @@
 package lib;
 
 public class AESEncryptObj {
+    /** chain id of the blockchain  */
     private int chain_id;
     /** which voter */
     private String user_name;

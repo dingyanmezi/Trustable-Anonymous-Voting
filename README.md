@@ -34,6 +34,10 @@ curl -v -X POST localhost:7001/getchain -d '{"chain_id":1}'
 ## TO improve this project further
 
 1. It took us a week approximately to finish the whole project (including checkpoint). The load is not that high 
+<<<<<<< HEAD
 compared to the previous project. 
+=======
+    compared to the previous project. Very good projects as previous projects are. Learned a bunch from these
+>>>>>>> more comments added
 
 2. Nothing to say specifically. TAs are the best. Thank them for their hard work and help. 
