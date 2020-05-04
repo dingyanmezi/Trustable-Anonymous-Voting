@@ -1,4 +1,3 @@
-# Trustable-Anonymous-Voting
 # Distributed Ledger
 
 Please read the writeup and the API documents for a description of the project.
